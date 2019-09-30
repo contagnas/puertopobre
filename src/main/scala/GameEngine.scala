@@ -322,7 +322,10 @@ object GameEngine {
         TriggersEvent(gameState, GetPlayerInput[ShipGoods]).t
 
       case DecideToShip(false) =>
-        TriggersEvent(gameState, NextAction).t
+        TriggersEvent(
+          gameState.updateCurrentPlayer(_.lens(_.roleState.wharfUsed).set(true)),
+          NextAction
+        ).t
 
       case ShipGoods(ship, good) =>
         val playerGoods = player.numberOfGoods.get(good)
