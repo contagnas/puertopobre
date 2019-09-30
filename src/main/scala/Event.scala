@@ -222,9 +222,3 @@ object Event {
   case class SelectExtraGood(good: Option[Good]) extends PlayerEvent
 
 }
-
-
-
-
-
-

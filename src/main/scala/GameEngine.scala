@@ -115,8 +115,7 @@ object GameEngine {
 
       case NextAction =>
         val newCurrentPlayer = (currentActingPlayer + 1) % gameState.players.length
-        val finishedActionPhase = newCurrentPlayer == currentActingPlayer
-        println(s"finishedActionPhase = ${finishedActionPhase}")
+        val finishedActionPhase = newCurrentPlayer == currentActivePlayer
         val nextPlayerState = gameState.copy(
           players = gameState.players.zipWithIndex.map { case (player, seat) =>
             player.copy(currentPlayer = seat == newCurrentPlayer)
