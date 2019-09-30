@@ -11,17 +11,17 @@ import scala.util.Random
 case class GameState(
   players: List[Player],
   currentRole: Option[Role],
-  buildingShop: Map[Building, Int],
-  hiddenPlantations: Map[Plantation, Int],
-  shownPlantations: List[IslandTile],
+  buildingShop: Count[Building],
+  hiddenPlantations: Count[Plantation],
+  shownPlantations: Count[Plantation],
   quarriesRemaining: Int,
   ships: Map[PublicShipSize, Ship],
   pointsRemaining: Int,
   colonistsInSupply: Int,
   colonistsOnShip: Int,
-  roleIncentives: Map[Role, Int],
+  roleIncentives: Count[Role],
   availableRoles: Set[Role],
-  availableGoods: Map[Good, Int],
+  availableGoods: Count[Good],
   tradingHouse: List[Good],
   constants: GameConstants,
 ) {
@@ -30,6 +30,22 @@ case class GameState(
       pointsRemaining == 0 ||
     players.exists(_.buildings.map(b => if (b.largeBuilding) 2 else 1).sum >= 12)
   }
+
+  def pretty: String =
+    s"""
+      |currentRole = $currentRole
+      |shownPlantations = $shownPlantations
+      |ships = ${ships.values.map(_.toString)}
+      |availableRoles = $availableRoles
+      |roleIncentives = $roleIncentives
+      |""".stripMargin
+
+  def updateCurrentPlayer(f: Player => Player): GameState =
+    copy(
+      players = players.map(
+        p => if (p.currentPlayer) f(p) else p
+      )
+    )
 }
 
 case class GameConstants(
@@ -80,9 +96,9 @@ object GameState {
         money = numberOfPlayers - 1,
         points = 0,
         buildings = Set.empty,
-        numberOfGoods = Map.empty.withDefaultValue(0),
-        colonists = Map.empty.withDefaultValue(0),
-        islandTiles = Map(initialPlantation -> 1).withDefaultValue(0),
+        numberOfGoods = Count.empty,
+        colonists = Count.empty,
+        islandTiles = Count(initialPlantation -> 1),
         governor = firstPlayer,
         activePlayer = firstPlayer,
         currentPlayer = firstPlayer,
@@ -102,8 +118,8 @@ object GameState {
       case 5 => 95
     }
 
-    val plantationsAfterInitial = initialPlayerPlantations.foldLeft(allPlantations) { case (total, plantation) =>
-      total.updated(plantation, total(plantation) - 1)
+    val plantationsAfterInitial: Count[Plantation] = initialPlayerPlantations.foldLeft(allPlantations) { case (total, plantation) =>
+      total.update(plantation, _ - 1)
     }
 
     val (hiddenPlantations, shownPlantations) = revealPlantations(
@@ -123,7 +139,7 @@ object GameState {
       pointsRemaining = totalPoints,
       colonistsInSupply = totalColonists - constants.minimumColonistsOnShip,
       colonistsOnShip = constants.minimumColonistsOnShip,
-      roleIncentives = Map.empty.withDefaultValue(0),
+      roleIncentives = Count.empty,
       availableRoles = constants.allRoles,
       availableGoods = allResources,
       tradingHouse = List.empty,
@@ -131,7 +147,7 @@ object GameState {
     )
   }
 
-  private val allResources: Map[Good, Int] = Map(
+  private val allResources: Count[Good] = Count(
     Coffee -> 9,
     Tobacco -> 9,
     Corn -> 10,
@@ -139,7 +155,7 @@ object GameState {
     Indigo -> 11
   )
 
-  private val allBuildings: Map[Building, Int] = Map(
+  private val allBuildings: Count[Building] = Count(
     SmallIndigoPlant -> 4,
     SmallSugarMill -> 4,
     SmallMarket -> 2,
@@ -168,13 +184,11 @@ object GameState {
     CityHall -> 1
   )
 
-  private val allPlantations: Map[Plantation, Int] = Map(
+  private val allPlantations: Count[Plantation] = Count(
     CornPlantation -> 10,
     IndigoPlantation -> 12,
     SugarPlantation -> 11,
     TobaccoPlantation -> 9,
     CoffeePlantation -> 8
   )
-
 }
-

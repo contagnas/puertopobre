@@ -21,33 +21,15 @@ object IslandTile extends Enum[IslandTile] {
   case object Quarry extends IslandTile
 
   def revealPlantations(
-    hiddenPantations: Map[Plantation, Int],
+    hiddenPlantations: Count[Plantation],
     count: Int,
     rng: Random
-  ): (Map[Plantation, Int], List[Plantation]) = (1 to count)
-    .foldLeft((hiddenPantations, List.empty[Plantation])) { case ((hidden, shown), _) =>
-      val (stillHidden, justShown) = IslandTile.revealPlantation(hidden, rng)
-      (stillHidden, justShown :: shown)
+  ): (Count[Plantation], Count[Plantation]) = (1 to count)
+    .foldLeft((hiddenPlantations, Count.empty[Plantation])) {
+      case ((hidden, shown), _) =>
+        val (stillHidden, justShown) = hidden.takeRandom(rng)
+        (stillHidden, shown.update(justShown, _ + 1))
     }
-
-  private def revealPlantation(
-    hiddenPlantations: Map[Plantation, Int],
-    rng: Random
-  ): (Map[Plantation, Int], Plantation) = {
-    val totalWeight = hiddenPlantations.values.sum
-    val selectedWeight = rng.between(0, totalWeight)
-
-    val plantationCDF: Seq[(Plantation, Int)] = hiddenPlantations.toList
-      .scanLeft[(Plantation, Int)]((null, 0)) { case ((_, weight), (plantation, count)) =>
-        (plantation, weight + count)
-      }
-
-    val selectedPlantation = plantationCDF.find { case (_, p) => p > selectedWeight }
-      .get._1
-
-    val stillHidden = hiddenPlantations.updated(selectedPlantation, hiddenPlantations(selectedPlantation) - 1)
-    (stillHidden, selectedPlantation)
-  }
 
   override def values: IndexedSeq[IslandTile] = findValues ++ Plantation.values
 }

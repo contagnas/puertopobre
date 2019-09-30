@@ -9,6 +9,9 @@ class Ship private (val size: Int, val currentGood: Option[Good], val count: Int
   def addGood(goodToAdd: Good, countToAdd: Int): Ship =
     new Ship(size, Some(goodToAdd), count + countToAdd)
 
+  def accepting(good: Good): Boolean =
+    !isFull && currentGood.forall(_ == good)
+
   def clearShip: Ship = new Ship(size, None, 0)
 }
 

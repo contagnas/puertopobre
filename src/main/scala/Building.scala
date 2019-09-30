@@ -1,4 +1,7 @@
+import ColonistLocation.ActiveColonist.OnIslandTile
 import Good._
+import IslandTile.Quarry
+import enumeratum._
 
 sealed abstract class Building(
   val price: Int,
@@ -6,9 +9,16 @@ sealed abstract class Building(
   val colonistSlots: Int,
   val maxQuarries: Int,
   val largeBuilding: Boolean = false
-)
+) extends EnumEntry {
+  def discountedPrice(player: Player): Int = {
+    val activeDiscount = if (player.activePlayer) 1 else 0
+    val quarries = player.colonists.get(OnIslandTile(Quarry))
+    val quarryDiscount = math.min(quarries, maxQuarries)
+    price - activeDiscount - quarryDiscount
+  }
+}
 
-object Building {
+object Building extends Enum[Building] {
   sealed trait ProductionBuilding extends Building {
     val resource: Good
   }
@@ -57,4 +67,6 @@ object Building {
   case object TwoUses extends WarehouseUses
   case object OneUse extends WarehouseUses
   case object NoUses extends WarehouseUses
+
+  override def values: IndexedSeq[Building] = findValues
 }
