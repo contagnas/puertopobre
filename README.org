@@ -1,0 +1,70 @@
+FAQ:
+
+Q: How do I see the current state of the board? \\
+A: Remember it or scroll up
+
+Sample gameplay:
+#+BEGIN_SRC
+Player 1: Select a role [Builder|Trader|Prospector|Settler|Captain|Craftsman|Mayor|Prospector2]
+>>> settler
+Player 1: Use an hacienda?
+>>> no
+Available plantations: Count(TobaccoPlantation -> 2, SugarPlantation -> 1, CoffeePlantation -> 1)
+Player 1: Select a tile (or 'none' to take nothing): [CornPlantation|TobaccoPlantation|IndigoPlantation|SugarPlantation|Quarry|CoffeePlantation]
+>>> quarry
+Player 1: Use a hospice?
+>>> no
+Player 2: Use an hacienda?
+>>> no
+Available plantations: Count(TobaccoPlantation -> 2, SugarPlantation -> 1, CoffeePlantation -> 1)
+Player 2: Select a tile (or 'none' to take nothing): [CornPlantation|TobaccoPlantation|IndigoPlantation|SugarPlantation|Quarry|CoffeePlantation]
+>>> sugarplantation
+Player 2: Use a hospice?
+>>> no
+Player 3: Use an hacienda?
+>>> no
+Available plantations: Count(TobaccoPlantation -> 2, CoffeePlantation -> 1)
+Player 3: Select a tile (or 'none' to take nothing): [CornPlantation|TobaccoPlantation|IndigoPlantation|SugarPlantation|Quarry|CoffeePlantation]
+>>> none
+Player 2: Select a role [Builder|Trader|Prospector|Settler|Captain|Craftsman|Mayor|Prospector2]
+>>> builder
+Player 2: Select a building (or 'none' to buy nothing): [LargeMarket|Harbor|Fortress|IndigoPlant|GuildHall|SugarMill|CustomsHouse|SmallMarket|TobaccoStorage|University|Hospice|Hacienda|SmallWarehouse|SmallIndigoPlant|LargeWarehouse|Factory|Wharf|CoffeeRoaster|Residence|ConstructionHut|CityHall|Office|SmallSugarMill]
+>>> smallindigoplant
+Player 2: Use a university?
+>>> no
+Player 3: Select a building (or 'none' to buy nothing): [LargeMarket|Harbor|Fortress|IndigoPlant|GuildHall|SugarMill|CustomsHouse|SmallMarket|TobaccoStorage|University|Hospice|Hacienda|SmallWarehouse|SmallIndigoPlant|LargeWarehouse|Factory|Wharf|CoffeeRoaster|Residence|ConstructionHut|CityHall|Office|SmallSugarMill]
+>>> smallmarket
+Player 3: Use a university?
+>>> no
+Player 1: Select a building (or 'none' to buy nothing): [LargeMarket|Harbor|Fortress|IndigoPlant|GuildHall|SugarMill|CustomsHouse|SmallMarket|TobaccoStorage|University|Hospice|Hacienda|SmallWarehouse|SmallIndigoPlant|LargeWarehouse|Factory|Wharf|CoffeeRoaster|Residence|ConstructionHut|CityHall|Office|SmallSugarMill]
+>>> none
+Player 3: Select a role [Builder|Trader|Prospector|Settler|Captain|Craftsman|Mayor|Prospector2]
+>>> mayor
+Player 3: Select colonist move: [Add|Remove|Finish]
+>>> add
+Player 3: Add a colonist to where? [CornPlantation|TobaccoPlantation|IndigoPlantation|SugarPlantation|Quarry|CoffeePlantation] or [LargeMarket|Harbor|Fortress|IndigoPlant|GuildHall|SugarMill|CustomsHouse|SmallMarket|TobaccoStorage|University|Hospice|Hacienda|SmallWarehouse|SmallIndigoPlant|LargeWarehouse|Factory|Wharf|CoffeeRoaster|Residence|ConstructionHut|CityHall|Office|SmallSugarMill]
+>>> cornplantation
+Player 3: Select colonist move: [Add|Remove|Finish]
+>>> add
+Player 3: Add a colonist to where? [CornPlantation|TobaccoPlantation|IndigoPlantation|SugarPlantation|Quarry|CoffeePlantation] or [LargeMarket|Harbor|Fortress|IndigoPlant|GuildHall|SugarMill|CustomsHouse|SmallMarket|TobaccoStorage|University|Hospice|Hacienda|SmallWarehouse|SmallIndigoPlant|LargeWarehouse|Factory|Wharf|CoffeeRoaster|Residence|ConstructionHut|CityHall|Office|SmallSugarMill]
+>>> smallmarket
+Player 3: Select colonist move: [Add|Remove|Finish]
+>>> finish
+Player 1: Select colonist move: [Add|Remove|Finish]
+>>> finish
+You may not keep colonists on San Juan when there are empty spaces on your board.
+Player 1: Select colonist move: [Add|Remove|Finish]
+>>> add
+Player 1: Add a colonist to where? [CornPlantation|TobaccoPlantation|IndigoPlantation|SugarPlantation|Quarry|CoffeePlantation] or [LargeMarket|Harbor|Fortress|IndigoPlant|GuildHall|SugarMill|CustomsHouse|SmallMarket|TobaccoStorage|University|Hospice|Hacienda|SmallWarehouse|SmallIndigoPlant|LargeWarehouse|Factory|Wharf|CoffeeRoaster|Residence|ConstructionHut|CityHall|Office|SmallSugarMill]
+>>> indigoplantation
+Player 1: Select colonist move: [Add|Remove|Finish]
+>>> finish
+Player 2: Select colonist move: [Add|Remove|Finish]
+>>> add
+Player 2: Add a colonist to where? [CornPlantation|TobaccoPlantation|IndigoPlantation|SugarPlantation|Quarry|CoffeePlantation] or [LargeMarket|Harbor|Fortress|IndigoPlant|GuildHall|SugarMill|CustomsHouse|SmallMarket|TobaccoStorage|University|Hospice|Hacienda|SmallWarehouse|SmallIndigoPlant|LargeWarehouse|Factory|Wharf|CoffeeRoaster|Residence|ConstructionHut|CityHall|Office|SmallSugarMill]
+>>> indigoplantation
+Player 2: Select colonist move: [Add|Remove|Finish]
+>>> finish
+Player 2: Select a role [Builder|Trader|Prospector|Settler|Captain|Craftsman|Mayor|Prospector2]
+>>> 
+#+END_SRC
