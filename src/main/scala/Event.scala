@@ -188,6 +188,19 @@ object Event {
         parseEnum(input.head, ColonistMovement).map(SelectColonistMove)
     }
 
+    implicit val parseExtraGood = new ParseableEvent[SelectExtraGood] {
+      override def prompt: List[String] = List(
+        s"Select extra good: ${enumHint(Good)}"
+      )
+
+      override def parse(input: List[String]): Either[String, SelectExtraGood] = {
+        input.head.toLowerCase match {
+          case "none" => Right(None)
+          case _ => parseEnum(input.head, Good).map(Some.apply)
+        }
+      }.map(SelectExtraGood.apply)
+    }
+
     implicit val parseDecideToShip = new ParseableEvent[DecideToShip] {
       override def prompt: List[String] = "Do you want to ship?" :: Nil
 

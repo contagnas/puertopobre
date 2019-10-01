@@ -137,7 +137,12 @@ object GameEngine {
         } else if (role == Role.Settler && finishedActionPhase) {
           TriggersEvent(gameState, RevealNewPlantations)
         } else if (role == Role.Mayor && finishedActionPhase) {
-            TriggersEvent(gameState, PopulateColonistShip)
+          TriggersEvent(gameState, PopulateColonistShip)
+        } else if (role == Role.Craftsman && finishedActionPhase) {
+          val makeActivePlayerCurrent = gameState.lens(_.players).modify(
+            players => players.map(p => p.copy(currentPlayer = p.activePlayer))
+          )
+          TriggersEvent(makeActivePlayerCurrent, GetPlayerInput[SelectExtraGood])
         } else {
           if (finishedActionPhase) {
             TriggersEvent(gameState, NextRole)
@@ -161,7 +166,7 @@ object GameEngine {
             building <- p.buildings
             slots = building.colonistSlots
           } yield slots
-          }.sum
+        }.sum
 
         val filledBuildingSlots = players.map {
           _.colonists.totalWhere {
@@ -514,14 +519,14 @@ object GameEngine {
 
 
       case SelectExtraGood(None) =>
-        TriggersEvent(gameState, NextAction).t
+        TriggersEvent(gameState, NextRole).t
 
       case SelectExtraGood(Some(good)) =>
         val takenGood = gameState.updateCurrentPlayer(
           _.lens(_.numberOfGoods).modify(_.update(good, _ + 1))
         ).lens(_.availableGoods).modify(_.update(good, _ - 1))
 
-        TriggersEvent(takenGood, NextAction).t
+        TriggersEvent(takenGood, NextRole).t
     }
   }
 }
