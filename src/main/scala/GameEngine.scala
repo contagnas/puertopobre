@@ -4,6 +4,7 @@ import ColonistLocation.InSanJuan
 import Event._
 import Good._
 import IslandTile.{Plantation, Quarry}
+import Role.{Captain, Craftsman, Mayor}
 import cats.implicits._
 import monocle.macros.syntax.lens._
 
@@ -26,6 +27,14 @@ object GameEngine {
       case Role.Craftsman => DistributeGoods
       case Role.Prospector => PayProspector
       case Role.Prospector2 => PayProspector
+    }
+
+    def cleanupRole(role: Role): Event = role match {
+      case Captain => CleanupShips
+      case Craftsman => RevealNewPlantations
+      case Mayor => PopulateColonistShip
+      case Craftsman => GetPlayerInput[SelectExtraGood]
+      case _ => NextRole
     }
 
     event match {
@@ -77,15 +86,15 @@ object GameEngine {
         val nextRoleSelector = (gameState.roleSelector + 1) % players.length
         val resetRoleState = players.map(_.copy(roleState = RoleState()))
 
-        val doneWithRole = gameState.copy(
+        val clearRoleState = gameState.copy(
           currentRole = None,
           players = resetRoleState
         )
 
         if (nextRoleSelector == gameState.governor) {
-          TriggersEvent(doneWithRole, NextRound).t
+          TriggersEvent(clearRoleState, NextRound).t
         } else {
-          val nextPlayerState = doneWithRole.copy(
+          val nextPlayerState = clearRoleState.copy(
             currentPlayer = nextRoleSelector,
             roleSelector = nextRoleSelector
           )
@@ -106,43 +115,31 @@ object GameEngine {
         val role = gameState.currentRole.get
 
         val nextPlayer = (gameState.currentPlayer + 1) % gameState.players.length
-        val finishedWithRole = nextPlayer == gameState.roleSelector
+        val finishedWithRole = {
+          role match {
+            case Captain =>
+              // Captain has different rules than the other roles - instead of each player
+              // getting one action, the role keeps going until no player can take further
+              // actions.
+              gameState.players.exists(
+                p => p.canShipPublic(gameState.ships.values) || p.canShipWharf
+              )
+            case _ =>
+              nextPlayer == gameState.roleSelector
+          }
+        }
+
         val nextPlayerState = gameState.copy(
           currentPlayer = nextPlayer
         )
 
-        val next = if (role == Role.Captain) {
-          if (gameState.players.exists(
-            p => p.canShipPublic(gameState.ships.values) || p.canShipWharf)
-          ) {
-            TriggersEvent(nextPlayerState, GetPlayerInput[DecideToShip])
-          } else {
-            TriggersEvent(gameState, CleanupShips)
-          }
-        } else if (role == Role.Settler && finishedWithRole) {
-          TriggersEvent(gameState, RevealNewPlantations)
-        } else if (role == Role.Mayor && finishedWithRole) {
-          TriggersEvent(gameState, PopulateColonistShip)
-        } else if (role == Role.Craftsman && finishedWithRole) {
-          val roleSelectorExtraGood = gameState.copy(
-            currentPlayer = gameState.roleSelector
-          )
-          TriggersEvent(roleSelectorExtraGood, GetPlayerInput[SelectExtraGood])
-        } else {
-          if (finishedWithRole) {
-            TriggersEvent(gameState, NextRole)
-          } else {
-            TriggersEvent(nextPlayerState, dispatchAction(role))
-          }
-        }
-
-        next.t
+        val nextEvent = if (finishedWithRole) cleanupRole(role) else dispatchAction(role)
+        TriggersEvent(nextPlayerState, nextEvent).t
 
 
       case GameOver =>
         // Let me out! :(
         throw new IllegalStateException("Game is already over")
-
 
 
       case CleanupShips =>
