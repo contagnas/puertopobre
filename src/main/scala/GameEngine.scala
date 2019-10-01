@@ -217,6 +217,11 @@ object GameEngine {
 
 
       case DistributeColonists =>
+        if (gameState.colonistsOnShip == 0) {
+          // We already took the colonists off the ship, just let the next player move them
+          return TriggersEvent(gameState, GetPlayerInput[SelectColonistMove]).t
+        }
+
         val takeFromSupply = gameState.copy(
           colonistsInSupply = gameState.colonistsInSupply - 1,
           players = players.map(p =>
