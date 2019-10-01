@@ -15,9 +15,7 @@ object Event {
   case object NextRound extends GameEvent
   case object NextRole extends GameEvent
   case object NextAction extends GameEvent
-  case object NextShipper extends GameEvent
   case object GameOver extends GameEvent
-  case object RefillColonists extends GameEvent
   case object CleanupShips extends GameEvent
   case object ClearTradingHouse extends GameEvent
   case object RevealNewPlantations extends GameEvent

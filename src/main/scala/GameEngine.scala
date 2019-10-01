@@ -1,6 +1,6 @@
 import Building.{Factory, Harbor, LargeMarket, SmallMarket}
 import ColonistLocation.ActiveColonist._
-import ColonistLocation.{ActiveColonist, InSanJuan}
+import ColonistLocation.InSanJuan
 import Event._
 import Good._
 import IslandTile.{Plantation, Quarry}
@@ -160,32 +160,6 @@ object GameEngine {
         throw new IllegalStateException("Game is already over")
 
 
-      case RefillColonists =>
-        val totalBuildingSlots = {
-          for {
-            p <- players
-            building <- p.buildings
-            slots = building.colonistSlots
-          } yield slots
-        }.sum
-
-        val filledBuildingSlots = players.map {
-          _.colonists.totalWhere {
-            case OnBuilding(_) => true
-            case _ => false
-          }
-        }.sum
-
-        val emptyBuildingSlots: Int = totalBuildingSlots - filledBuildingSlots
-        val colonistsToAdd = math.min(players.length, emptyBuildingSlots)
-        TriggersEvent(
-          gameState.copy(
-            colonistsOnShip = math.min(colonistsToAdd, gameState.colonistsInSupply),
-            colonistsInSupply = math.max(0, gameState.colonistsInSupply - colonistsToAdd)
-          ),
-          NextRole
-        ).t
-
 
       case CleanupShips =>
         TriggersEvent(
@@ -295,8 +269,8 @@ object GameEngine {
 
         TriggersEvent(
           gameState.copy(
-            colonistsOnShip = numberToPopulate,
-            colonistsInSupply = gameState.colonistsInSupply - numberToPopulate
+            colonistsOnShip = math.min(numberToPopulate, gameState.colonistsInSupply),
+            colonistsInSupply = math.max(0, gameState.colonistsInSupply - numberToPopulate)
           ),
           NextRole
         ).t
@@ -325,7 +299,16 @@ object GameEngine {
         TriggersEvent(
           gameState.copy(
             currentRole = Some(role),
-            availableRoles = gameState.availableRoles - role
+            availableRoles = gameState.availableRoles - role,
+            roleIncentives = gameState.roleIncentives.set(role, 0),
+            players = gameState.players.map(p =>
+              p.copy(
+                money = if (p.activePlayer)
+                  p.money + gameState.roleIncentives.get(role)
+                else
+                  p.money
+              )
+            )
           ),
           dispatchAction(role)
         ).t
@@ -360,8 +343,7 @@ object GameEngine {
         TriggersEvent(
           updatedShipState.updateCurrentPlayer(
             _.lens(_.points).modify(_ + pointsEarned)
-          ).updateCurrentPlayer(
-            _.lens(_.numberOfGoods).modify(_.update(good, _ - goodsAdded))
+              .lens(_.numberOfGoods).modify(_.update(good, _ - goodsAdded))
           ),
           NextAction
         ).t
