@@ -4,13 +4,10 @@ class Ship private (val size: Int, val currentGood: Option[Good], val count: Int
   val remainingCapacity: Int = size - count
   val isFull: Boolean = remainingCapacity == 0
   def acceptsGood(good: Good): Boolean =
-    currentGood.forall(_ == good)
+    !isFull && currentGood.forall(_ == good)
 
   def addGood(goodToAdd: Good, countToAdd: Int): Ship =
     new Ship(size, Some(goodToAdd), count + countToAdd)
-
-  def accepting(good: Good): Boolean =
-    !isFull && currentGood.forall(_ == good)
 
   def clearShip: (Count[Good], Ship) = {
     val clearedGoods: Count[Good] = if (currentGood.isEmpty)

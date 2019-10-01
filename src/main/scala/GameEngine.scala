@@ -4,8 +4,8 @@ import ColonistLocation.InSanJuan
 import Event._
 import Good._
 import IslandTile.{Plantation, Quarry}
-import monocle.macros.syntax.lens._
 import cats.implicits._
+import monocle.macros.syntax.lens._
 
 object GameEngine {
   case class TriggersEvent(gameState: GameState, nextEvent: Event) {
