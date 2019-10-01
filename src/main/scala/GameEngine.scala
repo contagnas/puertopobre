@@ -13,7 +13,6 @@ object GameEngine {
   }
 
   def step(gameState: GameState, event: Event): (GameState, Event) = {
-    event.render()
     val players = gameState.players
 
     val currentActingPlayer = players.indexWhere(_.currentPlayer)
@@ -35,9 +34,9 @@ object GameEngine {
 
     event match {
       case gpi@GetPlayerInput() =>
-        println(gameState.pretty)
         val input = gpi.parser.prompt.map { prompt =>
           println(s"Player ${currentActingPlayer + 1}: $prompt")
+          print(">>> ")
           scala.io.StdIn.readLine()
         }
 
@@ -407,6 +406,7 @@ object GameEngine {
 
 
       case UseHacienda(use) =>
+        println(s"Available plantations: ${gameState.shownPlantations}")
         val addedPlantation = if (!use) {
           gameState
         } else {
