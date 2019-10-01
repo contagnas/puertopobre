@@ -241,15 +241,12 @@ object GameEngine {
           } yield good -> math.min(available, producable)
         }.toArray
 
-        val allocatedGoods = players.map { p =>
-          if (p.currentPlayer) {
-            p.copy(
-              numberOfGoods = p.numberOfGoods |+| Count(producedGoods: _*)
-            )
-          } else p
+        val nextState = producedGoods.foldLeft(gameState) { case (state, (good, number)) =>
+            state.updateCurrentPlayer(
+              _.lens(_.numberOfGoods).modify(_.update(good, _ + number))
+            ).lens(_.availableGoods).modify(_.update(good, _ - number))
         }
 
-        val nextState = gameState.copy(players = allocatedGoods)
         if (player.colonists.exists(OnBuilding(Factory)))
           TriggersEvent(nextState, PayFactory(producedGoods.length)).t
         else
