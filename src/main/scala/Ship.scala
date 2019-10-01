@@ -12,7 +12,14 @@ class Ship private (val size: Int, val currentGood: Option[Good], val count: Int
   def accepting(good: Good): Boolean =
     !isFull && currentGood.forall(_ == good)
 
-  def clearShip: Ship = new Ship(size, None, 0)
+  def clearShip: (Count[Good], Ship) = {
+    val clearedGoods: Count[Good] = if (currentGood.isEmpty)
+      Count.empty
+    else
+      Count(currentGood.get -> count)
+
+    clearedGoods -> new Ship(size, None, 0)
+  }
 }
 
 object Ship {

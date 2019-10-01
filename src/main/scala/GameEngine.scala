@@ -4,8 +4,8 @@ import ColonistLocation.InSanJuan
 import Event._
 import Good._
 import IslandTile.{Plantation, Quarry}
-import cats.implicits._
 import monocle.macros.syntax.lens._
+import cats.implicits._
 
 object GameEngine {
   case class TriggersEvent(gameState: GameState, nextEvent: Event) {
@@ -162,11 +162,22 @@ object GameEngine {
 
 
       case CleanupShips =>
+        val clearedShipsAndGoods: Seq[(ShipSize.PublicShipSize, (Count[Good], Ship))] =
+          gameState.ships.toList.map { case (size, ship) =>
+            if (ship.isFull)
+              size -> ship.clearShip
+            else
+              size -> (Count.empty[Good] -> ship)
+          }
+
+        val clearedShips = clearedShipsAndGoods.map { case (size, (_, ship)) => size -> ship }.toMap
+        val clearedGoods = clearedShipsAndGoods.map { case (_, (goods, _)) => goods }
+          .foldLeft(Count.empty[Good])(_ |+| _)
+
         TriggersEvent(
-          gameState.lens(_.ships).modify(
-            _.map { case (size, ship) =>
-              (size, if (ship.isFull) ship.clearShip else ship)
-            }
+          gameState.copy(
+            ships = clearedShips,
+            availableGoods = gameState.availableGoods |+| clearedGoods
           ),
           NextRole
         ).t
@@ -239,12 +250,12 @@ object GameEngine {
             (good, producable) <- player.goodsProduction.toList
             available = gameState.availableGoods.get(good)
           } yield good -> math.min(available, producable)
-        }.toArray
+          }.toArray
 
         val nextState = producedGoods.foldLeft(gameState) { case (state, (good, number)) =>
-            state.updateCurrentPlayer(
-              _.lens(_.numberOfGoods).modify(_.update(good, _ + number))
-            ).lens(_.availableGoods).modify(_.update(good, _ - number))
+          state.updateCurrentPlayer(
+            _.lens(_.numberOfGoods).modify(_.update(good, _ + number))
+          ).lens(_.availableGoods).modify(_.update(good, _ - number))
         }
 
         if (player.colonists.exists(OnBuilding(Factory)))
