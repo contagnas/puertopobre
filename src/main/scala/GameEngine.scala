@@ -238,8 +238,8 @@ object GameEngine {
           for {
             (good, producable) <- player.goodsProduction.toList
             available = gameState.availableGoods.get(good)
-          } yield good -> math.max(available, producable)
-          }.toArray
+          } yield good -> math.min(available, producable)
+        }.toArray
 
         val allocatedGoods = players.map { p =>
           if (p.currentPlayer) {
