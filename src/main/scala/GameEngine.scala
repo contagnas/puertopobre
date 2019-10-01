@@ -26,6 +26,7 @@ object GameEngine {
       case Role.Captain => GetPlayerInput[DecideToShip]
       case Role.Settler => GetPlayerInput[UseHacienda]
       case Role.Builder => GetPlayerInput[PurchaseBuilding]
+      case Role.Trader => GetPlayerInput[SellGood]
       case Role.Mayor => DistributeColonists
       case Role.Craftsman => DistributeGoods
       case Role.Prospector => PayProspector
