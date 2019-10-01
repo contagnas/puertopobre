@@ -15,11 +15,7 @@ object GameEngine {
   def step(gameState: GameState, event: Event): (GameState, Event) = {
     val players = gameState.players
 
-    val currentActingPlayer = players.indexWhere(_.currentPlayer)
-    val currentActivePlayer = players.indexWhere(_.activePlayer)
-    val currentGovernor = players.indexWhere(_.governor)
-
-    val player = gameState.players(currentActingPlayer)
+    val player = gameState.players(gameState.currentPlayer)
 
     def dispatchAction(role: Role): Event = role match {
       case Role.Captain => GetPlayerInput[DecideToShip]
@@ -35,7 +31,7 @@ object GameEngine {
     event match {
       case gpi@GetPlayerInput() =>
         val input = gpi.parser.prompt.map { prompt =>
-          println(s"Player ${currentActingPlayer + 1}: $prompt")
+          println(s"Player ${gameState.currentPlayer + 1}: $prompt")
           print(">>> ")
           scala.io.StdIn.readLine()
         }
@@ -58,23 +54,18 @@ object GameEngine {
         if (gameState.gameOver) {
           TriggersEvent(gameState, GameOver).t
         } else {
-          val nextGov = (currentGovernor + 1) % players.length
-          val nextTurnPlayers = players.zipWithIndex.map { case (player, seat) =>
-            player.copy(
-              governor = seat == nextGov,
-              activePlayer = seat == nextGov,
-              currentPlayer = seat == nextGov
-            )
-          }
+          val nextGov = (gameState.governor + 1) % players.length
 
-          val addedIncentives = gameState.availableRoles.foldLeft(gameState.roleIncentives) {
-            case (acc, role) => acc.update(role, _ + 1)
-          }
+          val addedIncentives = gameState.availableRoles.foldLeft(Count.empty[Role])(
+            (count, role) => count.set(role, 1)
+          )
 
           TriggersEvent(
             gameState.copy(
-              players = nextTurnPlayers,
-              roleIncentives = addedIncentives,
+              currentPlayer = nextGov,
+              roleSelector = nextGov,
+              governor = nextGov,
+              roleIncentives = gameState.roleIncentives |+| addedIncentives,
               availableRoles = gameState.constants.allRoles
             ),
             GetPlayerInput[SelectRole]
@@ -83,7 +74,7 @@ object GameEngine {
 
 
       case NextRole =>
-        val nextActivePlayer = (currentActivePlayer + 1) % players.length
+        val nextRoleSelector = (gameState.roleSelector + 1) % players.length
         val resetRoleState = players.map(_.copy(roleState = RoleState()))
 
         val doneWithRole = gameState.copy(
@@ -91,19 +82,15 @@ object GameEngine {
           players = resetRoleState
         )
 
-        if (nextActivePlayer == currentGovernor) {
+        if (nextRoleSelector == gameState.governor) {
           TriggersEvent(doneWithRole, NextRound).t
         } else {
-          val players = resetRoleState.zipWithIndex.map { case (player, seat) =>
-            player.copy(
-              activePlayer = seat == nextActivePlayer,
-              currentPlayer = seat == nextActivePlayer
-            )
-          }
+          val nextPlayerState = doneWithRole.copy(
+            currentPlayer = nextRoleSelector,
+            roleSelector = nextRoleSelector
+          )
           TriggersEvent(
-            doneWithRole.copy(
-              players = players
-            ),
+            nextPlayerState,
             GetPlayerInput[SelectRole]
           ).t
         }
@@ -114,18 +101,16 @@ object GameEngine {
 
 
       case NextAction =>
-        val newCurrentPlayer = (currentActingPlayer + 1) % gameState.players.length
-        val finishedActionPhase = newCurrentPlayer == currentActivePlayer
-        val nextPlayerState = gameState.copy(
-          players = gameState.players.zipWithIndex.map { case (player, seat) =>
-            player.copy(currentPlayer = seat == newCurrentPlayer)
-          }
-        )
-
         if (gameState.currentRole.isEmpty)
           throw new IllegalStateException("Cannot do next state with no role")
-
         val role = gameState.currentRole.get
+
+        val nextPlayer = (gameState.currentPlayer + 1) % gameState.players.length
+        val finishedWithRole = nextPlayer == gameState.roleSelector
+        val nextPlayerState = gameState.copy(
+          currentPlayer = nextPlayer
+        )
+
         val next = if (role == Role.Captain) {
           if (gameState.players.exists(
             p => p.canShipPublic(gameState.ships.values) || p.canShipWharf)
@@ -134,17 +119,17 @@ object GameEngine {
           } else {
             TriggersEvent(gameState, CleanupShips)
           }
-        } else if (role == Role.Settler && finishedActionPhase) {
+        } else if (role == Role.Settler && finishedWithRole) {
           TriggersEvent(gameState, RevealNewPlantations)
-        } else if (role == Role.Mayor && finishedActionPhase) {
+        } else if (role == Role.Mayor && finishedWithRole) {
           TriggersEvent(gameState, PopulateColonistShip)
-        } else if (role == Role.Craftsman && finishedActionPhase) {
-          val makeActivePlayerCurrent = gameState.lens(_.players).modify(
-            players => players.map(p => p.copy(currentPlayer = p.activePlayer))
+        } else if (role == Role.Craftsman && finishedWithRole) {
+          val roleSelectorExtraGood = gameState.copy(
+            currentPlayer = gameState.roleSelector
           )
-          TriggersEvent(makeActivePlayerCurrent, GetPlayerInput[SelectExtraGood])
+          TriggersEvent(roleSelectorExtraGood, GetPlayerInput[SelectExtraGood])
         } else {
-          if (finishedActionPhase) {
+          if (finishedWithRole) {
             TriggersEvent(gameState, NextRole)
           } else {
             TriggersEvent(nextPlayerState, dispatchAction(role))
@@ -214,20 +199,20 @@ object GameEngine {
 
         val takeFromSupply = gameState.copy(
           colonistsInSupply = gameState.colonistsInSupply - 1,
-          players = players.map(p =>
-            if (p.activePlayer) {
+          players = players.zipWithIndex.map { case (p, seat) =>
+            if (seat == gameState.roleSelector) {
               p.copy(colonists = p.colonists.update(InSanJuan, _ + 1))
             } else p
-          )
+          }
         )
 
         val colonistsToDistribute = gameState.colonistsOnShip
         val colonistsToEach = players.length / colonistsToDistribute
         val fairColonists = colonistsToEach * players.length
         val leftover = colonistsToDistribute - fairColonists
-        val activeSeat = players.indexWhere(_.activePlayer)
+        // Seats which receive an extra colonist from the boat
         val takesExtra = (0 until leftover).map(i =>
-          activeSeat + i
+          gameState.roleSelector + i
         ).toSet
 
         val distributedColonists = takeFromSupply.copy(
@@ -308,14 +293,14 @@ object GameEngine {
             currentRole = Some(role),
             availableRoles = gameState.availableRoles - role,
             roleIncentives = gameState.roleIncentives.set(role, 0),
-            players = gameState.players.map(p =>
+            players = gameState.players.zipWithIndex.map { case (p, seat) =>
               p.copy(
-                money = if (p.activePlayer)
+                money = if (gameState.roleSelector == seat)
                   p.money + gameState.roleIncentives.get(role)
                 else
                   p.money
               )
-            )
+            }
           ),
           dispatchAction(role)
         ).t
@@ -344,7 +329,7 @@ object GameEngine {
         }
 
         val harborBonus = if (player.colonists.exists(OnBuilding(Harbor))) 1 else 0
-        val captainBonus = if (player.activePlayer && !player.roleState.hasShipped) 1 else 0
+        val captainBonus = if (gameState.currentPlayer == gameState.roleSelector && !player.roleState.hasShipped) 1 else 0
         val pointsEarned = goodsAdded + harborBonus + captainBonus
 
         TriggersEvent(
@@ -376,7 +361,7 @@ object GameEngine {
           case None =>
             TriggersEvent(gameState, NextAction).t
           case Some(soldGood) =>
-            val traderBonus = if (player.activePlayer) 1 else 0
+            val traderBonus = if (gameState.currentPlayer == gameState.roleSelector) 1 else 0
             val sMarketBonus = if (player.colonists.exists(OnBuilding(SmallMarket))) 1 else 0
             val lMarketBonus = if (player.colonists.exists(OnBuilding(LargeMarket))) 2 else 0
 

@@ -10,11 +10,12 @@ sealed abstract class Building(
   val maxQuarries: Int,
   val largeBuilding: Boolean = false
 ) extends EnumEntry {
-  def discountedPrice(player: Player): Int = {
-    val activeDiscount = if (player.activePlayer) 1 else 0
+  def discountedPrice(gameState: GameState): Int = {
+    val builderDiscount = if (gameState.currentPlayer == gameState.roleSelector) 1 else 0
+    val player = gameState.players(gameState.currentPlayer)
     val quarries = player.colonists.get(OnIslandTile(Quarry))
     val quarryDiscount = math.min(quarries, maxQuarries)
-    price - activeDiscount - quarryDiscount
+    price - builderDiscount - quarryDiscount
   }
 }
 

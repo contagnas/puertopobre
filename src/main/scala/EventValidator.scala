@@ -8,7 +8,7 @@ import ShipSize.PublicShipSize
 
 object EventValidator {
   def validate(event: PlayerEvent, gameState: GameState): Either[String, Unit] = {
-    val currentPlayer = gameState.players.find(_.currentPlayer).get
+    val currentPlayer = gameState.players(gameState.currentPlayer)
 
     event match {
       case Event.SelectRole(role) =>
@@ -48,12 +48,11 @@ object EventValidator {
         Right(())
 
       case Event.StoreGoods(Some(good), usingWarehouse) =>
-        val storingPlayer = gameState.players.find(_.currentPlayer).get
-        if (storingPlayer.numberOfGoods.exists(good))
+        if (currentPlayer.numberOfGoods.exists(good))
           Left(s"You do not have any $good.")
         else if (usingWarehouse && !currentPlayer.warehouseAvailable)
           Left(s"You do not have any warehouses to use.")
-        else if (storingPlayer.roleState.storedSingleGood)
+        else if (currentPlayer.roleState.storedSingleGood)
           Left(s"You have already stored your single good this round.")
         else Right(())
 
@@ -86,7 +85,7 @@ object EventValidator {
           case Some(Quarry) =>
             if (gameState.quarriesRemaining == 0)
               Left(s"There are no Quarries left.")
-            else if (!currentPlayer.activePlayer && !currentPlayer.colonists.exists(OnBuilding(ConstructionHut)))
+            else if (gameState.currentPlayer != gameState.roleSelector && !currentPlayer.colonists.exists(OnBuilding(ConstructionHut)))
               Left(s"You may not take a Quarry. Take one of the plantations.")
             else Right(())
         }
@@ -99,7 +98,7 @@ object EventValidator {
       case Event.PurchaseBuilding(building) =>
         building match {
           case Some(build) =>
-            val price = build.discountedPrice(currentPlayer)
+            val price = build.discountedPrice(gameState)
             if (price > currentPlayer.money)
               Left(s"You cannot afford $build, it costs $price to you.")
             else if (!gameState.buildingShop.exists(build))

@@ -21,9 +21,6 @@ case class Player(
   numberOfGoods: Count[Good],
   colonists: Count[ColonistLocation],
   islandTiles: Count[IslandTile],
-  governor: Boolean,
-  activePlayer: Boolean,
-  currentPlayer: Boolean,
   roleState: RoleState
 ) {
   lazy val goodsProduction: Count[Good] = {

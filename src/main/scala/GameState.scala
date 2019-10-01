@@ -10,6 +10,9 @@ import scala.util.Random
 
 case class GameState(
   players: List[Player],
+  currentPlayer: Int,
+  roleSelector: Int,
+  governor: Int,
   currentRole: Option[Role],
   buildingShop: Count[Building],
   hiddenPlantations: Count[Plantation],
@@ -42,9 +45,9 @@ case class GameState(
 
   def updateCurrentPlayer(f: Player => Player): GameState =
     copy(
-      players = players.map(
-        p => if (p.currentPlayer) f(p) else p
-      )
+      players = players.zipWithIndex.map {
+        case (p, seat) => if (seat == currentPlayer) f(p) else p
+      }
     )
 }
 
@@ -90,7 +93,6 @@ object GameState {
     }
 
     val initialPlayerBoards = (0 until numberOfPlayers).map { i =>
-      val firstPlayer = 0 == i
       val initialPlantation: IslandTile = initialPlayerPlantations(i)
       Player(
         money = numberOfPlayers - 1,
@@ -99,9 +101,6 @@ object GameState {
         numberOfGoods = Count.empty,
         colonists = Count.empty,
         islandTiles = Count(initialPlantation -> 1),
-        governor = firstPlayer,
-        activePlayer = firstPlayer,
-        currentPlayer = firstPlayer,
         roleState = RoleState()
       )
     }.toList
@@ -130,6 +129,9 @@ object GameState {
 
     GameState(
       players = initialPlayerBoards,
+      currentPlayer = 0,
+      roleSelector = 0,
+      governor = 0,
       currentRole = None,
       buildingShop = allBuildings,
       hiddenPlantations = hiddenPlantations,
