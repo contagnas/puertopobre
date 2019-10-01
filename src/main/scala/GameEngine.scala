@@ -136,6 +136,8 @@ object GameEngine {
           }
         } else if (role == Role.Settler && finishedActionPhase) {
           TriggersEvent(gameState, RevealNewPlantations)
+        } else if (role == Role.Mayor && finishedActionPhase) {
+            TriggersEvent(gameState, PopulateColonistShip)
         } else {
           if (finishedActionPhase) {
             TriggersEvent(gameState, NextRole)
@@ -243,7 +245,7 @@ object GameEngine {
           }
         )
 
-        TriggersEvent(distributedColonists, PopulateColonistShip).t
+        TriggersEvent(distributedColonists, GetPlayerInput[SelectColonistMove]).t
 
 
       case DistributeGoods =>
