@@ -5,7 +5,7 @@ import v2.components.Building.ConstructionHut
 import v2.components.ColonistLocation.ActiveColonist.OnBuilding
 import v2.components.IslandTile
 import v2.components.IslandTile.{Plantation, Quarry}
-import v2.events.Event
+import v2.events.{Event, GetPlayerInput}
 
 case class TakeIslandTile(islandTile: Option[IslandTile]) extends Event {
   override def validationError(state: GameState): Option[String] = {
@@ -35,5 +35,7 @@ case class TakeIslandTile(islandTile: Option[IslandTile]) extends Event {
     }
   }
   override def run(state: GameState): GameState = ???
-  override def nextEvent(state: GameState): Event = ???
+
+  override def nextEvent(state: GameState): Event =
+    GetPlayerInput[UseHospice] // Could skip this if player doesn't have one
 }

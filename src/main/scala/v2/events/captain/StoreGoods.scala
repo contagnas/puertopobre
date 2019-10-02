@@ -1,7 +1,7 @@
 package v2.events.captain
 
 import v2.components.Good
-import v2.events.Event
+import v2.events.{Event, NextAction}
 import v2.{GameState, Player}
 
 case class StoreGoods(goodToStore: Option[Good], usingWarehouse: Boolean) extends Event {
@@ -40,5 +40,6 @@ case class StoreGoods(goodToStore: Option[Good], usingWarehouse: Boolean) extend
   }
 
   override def run(state: GameState): GameState = ???
-  override def nextEvent(state: GameState): Event = ???
+
+  override def nextEvent(state: GameState): Event = NextAction
 }

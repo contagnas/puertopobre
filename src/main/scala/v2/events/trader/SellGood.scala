@@ -4,7 +4,7 @@ import v2.GameState
 import v2.components.Building.Office
 import v2.components.ColonistLocation.ActiveColonist.OnBuilding
 import v2.components.Good
-import v2.events.Event
+import v2.events.{Event, NextAction}
 
 case class SellGood(goodToSell: Option[Good]) extends Event {
   override def validationError(state: GameState): Option[String] = {
@@ -24,6 +24,10 @@ case class SellGood(goodToSell: Option[Good]) extends Event {
 
   override def run(state: GameState): GameState = ???
 
-  override def nextEvent(state: GameState): Event = ???
+  override def nextEvent(state: GameState): Event =
+    if (state.tradingHouse.size == 4)
+      ClearTradingHouse
+    else
+      NextAction
 }
 

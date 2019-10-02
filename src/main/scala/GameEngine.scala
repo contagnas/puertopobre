@@ -278,6 +278,7 @@ object GameEngine {
           gameState.copy(
             players = players.map(p =>
               p.copy(money = p.money + payout)
+
             )
           ),
           NextAction

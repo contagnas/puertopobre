@@ -3,19 +3,19 @@ package v2
 import v2.components.Building._
 import v2.components.ColonistLocation.ActiveColonist.{OnBuilding, OnIslandTile}
 import v2.components.Good._
-import v2.components.Ship
-import v2.components.{Building, ColonistLocation, Good, IslandTile}
 import v2.components.IslandTile.Plantation
 import v2.components.IslandTile.Plantation.CornPlantation
+import v2.components._
 
 case class RoleState(
   wharfUsed: Boolean = false,
   warehousesUsed: Int = 0,
   storedSingleGood: Boolean = false,
-  storedGoods: Map[components.Good, Int] = Map.empty,
-  selectedIslandTile: Option[components.IslandTile] = None,
-  purchasedBuilding: Option[components.Building] = None,
+  storedGoods: Map[Good, Int] = Map.empty,
+  selectedIslandTile: Option[IslandTile] = None,
+  purchasedBuilding: Option[Building] = None,
   hasShipped: Boolean = false,
+  goodsProducedThisRound: Count[Good] = Count.empty,
 )
 
 case class Player(
@@ -25,7 +25,7 @@ case class Player(
   numberOfGoods: Count[Good],
   colonists: Count[ColonistLocation],
   islandTiles: Count[IslandTile],
-  roleState: RoleState
+  roleState: RoleState,
 ) {
   lazy val goodsProduction: Count[Good] = {
     val plantations = islandTiles.nonZeroItems.collect {

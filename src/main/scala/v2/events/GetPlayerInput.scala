@@ -1,9 +1,8 @@
-package v2.events.playerinput
+package v2.events
 
 import v2.GameState
 
-case_class GetPlayerInput() extends Event {
-  override def validationError(state: GameState): Option[String] = ???
+case class GetPlayerInput[E <: Event]() extends Event {
   override def run(state: GameState): GameState = ???
   override def nextEvent(state: GameState): Event = ???
 }

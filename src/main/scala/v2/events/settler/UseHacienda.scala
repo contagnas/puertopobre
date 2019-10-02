@@ -3,7 +3,7 @@ package v2.events.settler
 import v2.components.Building.Hacienda
 import v2.GameState
 import v2.components.ColonistLocation.ActiveColonist.OnBuilding
-import v2.events.Event
+import v2.events.{Event, GetPlayerInput}
 
 case class UseHacienda(use: Boolean) extends Event {
   override def validationError(state: GameState): Option[String] = {
@@ -17,5 +17,6 @@ case class UseHacienda(use: Boolean) extends Event {
 
   override def run(state: GameState): GameState = ???
 
-  override def nextEvent(state: GameState): Event = ???
+  override def nextEvent(state: GameState): Event =
+    GetPlayerInput[TakeIslandTile]
 }
