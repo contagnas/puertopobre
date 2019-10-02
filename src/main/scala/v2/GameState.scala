@@ -37,6 +37,8 @@ case class GameState(
     players.exists(_.buildings.map(b => if (b.largeBuilding) 2 else 1).sum >= 12)
   }
 
+  def currentPlayerState: Player = players(currentPlayer)
+
   def pretty: String =
     s"""
       |currentRole = $currentRole
