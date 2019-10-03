@@ -20,6 +20,7 @@ case class GameState(
   buildingShop: Count[Building],
   hiddenPlantations: Count[Plantation],
   shownPlantations: Count[Plantation],
+  discardedPlantations: Count[Plantation] = Count.empty,
   quarriesRemaining: Int,
   ships: Map[PublicShipSize, Ship],
   pointsRemaining: Int,
@@ -58,7 +59,7 @@ case class GameState(
 
 case class GameConstants(
   numberOfShownPlantations: Int,
-  allRoles: Set[Role],
+  playableRoles: Set[Role],
   minimumColonistsOnShip: Int,
   rng: Random
 )
@@ -80,7 +81,7 @@ object GameState {
 
     val constants = GameConstants(
       numberOfShownPlantations = numberOfPlayers + 1,
-      allRoles = allRoles,
+      playableRoles = allRoles,
       minimumColonistsOnShip = numberOfPlayers,
       rng = rng
     )
@@ -126,32 +127,28 @@ object GameState {
       total.update(plantation, _ - 1)
     }
 
-    val (hiddenPlantations, shownPlantations) = revealPlantations(
-      plantationsAfterInitial,
-      constants.numberOfShownPlantations,
-      rng
-    )
-
-    GameState(
+    val state = GameState(
       players = initialPlayerBoards,
       currentPlayer = 0,
       roleSelector = 0,
       governor = 0,
       currentRole = None,
       buildingShop = allBuildings,
-      hiddenPlantations = hiddenPlantations,
-      shownPlantations = shownPlantations,
+      hiddenPlantations = plantationsAfterInitial,
+      shownPlantations = Count.empty,
       quarriesRemaining = 8,
       ships = emptyShips,
       pointsRemaining = totalPoints,
       colonistsInSupply = totalColonists - constants.minimumColonistsOnShip,
       colonistsOnShip = constants.minimumColonistsOnShip,
       roleIncentives = Count.empty,
-      availableRoles = constants.allRoles,
+      availableRoles = constants.playableRoles,
       availableGoods = allResources,
       tradingHouse = List.empty,
       constants = constants
     )
+
+    revealPlantations(state)
   }
 
   private val allResources: Count[Good] = Count(

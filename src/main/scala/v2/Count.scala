@@ -7,7 +7,7 @@ import scala.util.Random
 
 object Count {
   def apply[K](values: (K, Int)*): Count[K] = {
-    values.foreach(kv => if (kv._2 < 0) throw noNegativeNumbersException)
+    values.foreach(kv => if (kv._2 < 0) throw noNegativeNumbersException(kv.toString))
     val filtered = values.filter(_._2 > 0)
     new Count(filtered.toMap)
   }
@@ -21,7 +21,7 @@ object Count {
     override def empty: Count[K] = Count.empty
   }
 
-  val noNegativeNumbersException = new IllegalArgumentException("No negative numbers")
+  def noNegativeNumbersException(msg: String) = new IllegalArgumentException(s"No negative numbers $msg")
 }
 
 class Count[K] private (private val map: Map[K, Int]) {
@@ -30,7 +30,7 @@ class Count[K] private (private val map: Map[K, Int]) {
   def total: Int = map.values.sum
 
   def set(item: K, count: Int): Count[K] =
-    if (count < 0) throw Count.noNegativeNumbersException
+    if (count < 0) throw Count.noNegativeNumbersException(s"setting $item to $count")
     else if (count == 0) new Count(map - item)
     else new Count(map.updated(item, count))
 

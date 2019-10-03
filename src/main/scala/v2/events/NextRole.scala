@@ -1,9 +1,18 @@
 package v2.events
 
-import v2.GameState
+import v2.{GameState, RoleState}
 
 object NextRole extends Event {
-  override def run(state: GameState): GameState = ???
+  override def run(state: GameState): GameState = {
+    val nextRoleSelector = (state.roleSelector + 1) % state.players.length
+
+    state.copy(
+      roleSelector = nextRoleSelector,
+      currentRole = None,
+      players = state.players.map(_.copy(roleState = RoleState())),
+      currentPlayer = nextRoleSelector
+    )
+  }
 
   override def nextEvent(state: GameState): Event =
     if (state.roleSelector == state.governor)

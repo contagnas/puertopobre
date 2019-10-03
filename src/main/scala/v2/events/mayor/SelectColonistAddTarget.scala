@@ -1,15 +1,16 @@
 package v2.events.mayor
 
-import v2.components.ColonistLocation.ActiveColonist.{OnBuilding, OnIslandTile}
+import monocle.macros.syntax.lens._
 import v2.GameState
-import v2.components.ColonistLocation.ActiveColonist
-import v2.events.{Event, GetPlayerInput}
+import v2.components.ColonistLocation.{ActiveColonist, InSanJuan}
+import v2.components.ColonistLocation.ActiveColonist.{OnBuilding, OnIslandTile}
+import v2.events.{Enumerable, Event, GetPlayerInput}
 
-case class SelectColonistAddTarget(target: ActiveColonist) extends Event {
+case class SelectColonistAddTarget(addTarget: ActiveColonist) extends Event {
   override def validationError(state: GameState): Option[String] = {
     val player = state.currentPlayerState
 
-    target match {
+    addTarget match {
       case OnBuilding(building) =>
         if (!player.buildings.contains(building))
           Some(s"You do not have a $building.")
@@ -18,13 +19,25 @@ case class SelectColonistAddTarget(target: ActiveColonist) extends Event {
         else
           None
       case OnIslandTile(islandTile) =>
-        Some(s"You do not have an unoccupied $islandTile")
-          .filter(_ => player.islandTiles.get(islandTile) < player.colonists.get(OnIslandTile(islandTile))
+        if (player.islandTiles.get(islandTile) <= player.colonists.get(OnIslandTile(islandTile)))
+          Some(s"You do not have an unoccupied $islandTile")
+        else None
     }
   }
 
-  override def run(state: GameState): GameState = ???
+  override def run(state: GameState): GameState = state.updateCurrentPlayer(
+    player => player
+      .lens(_.colonists).modify(_.update(addTarget, _ + 1))
+      .lens(_.colonists).modify(_.update(InSanJuan, _ - 1))
+  )
 
   override def nextEvent(state: GameState): Event =
     GetPlayerInput[SelectColonistMove]
+}
+
+object SelectColonistAddTarget {
+  implicit val enum = new Enumerable[SelectColonistAddTarget] {
+    override def allPossibleMoves: Seq[SelectColonistAddTarget] =
+      ActiveColonist.values.map(SelectColonistAddTarget.apply)
+  }
 }

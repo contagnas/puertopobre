@@ -11,7 +11,10 @@ object ColonistLocation extends Enum[ColonistLocation] {
     case class OnBuilding(building: Building) extends ActiveColonist
     case class OnIslandTile(islandTile: IslandTile) extends ActiveColonist
 
-    override def values: IndexedSeq[ActiveColonist] = findValues
+    override def values: IndexedSeq[ActiveColonist] = IndexedSeq(
+      Building.values.map(OnBuilding),
+      IslandTile.values.map(OnIslandTile)
+    ).flatten
   }
 
   override def values: IndexedSeq[ColonistLocation] = findValues ++ ActiveColonist.values

@@ -1,16 +1,29 @@
 package v2.events.mayor
 
+import monocle.macros.syntax.lens._
 import v2.GameState
-import v2.components.ColonistLocation.ActiveColonist
-import v2.events.{Event, GetPlayerInput}
+import v2.components.ColonistLocation.{ActiveColonist, InSanJuan}
+import v2.events.{Enumerable, Event, GetPlayerInput}
 
-case class SelectColonistRemoveTarget(target: ActiveColonist) extends Event {
+case class SelectColonistRemoveTarget(removeTarget: ActiveColonist) extends Event {
   override def validationError(state: GameState): Option[String] =
-    Some(s"You do not have any colonists $target")
-      .filter(_ => state.currentPlayerState.colonists.get(target) > 0)
+    if (state.currentPlayerState.colonists.get(removeTarget) == 0)
+      Some(s"You do not have any colonists $removeTarget")
+    else None
 
-  override def run(state: GameState): GameState = ???
+  override def run(state: GameState): GameState = state.updateCurrentPlayer(
+    player => player
+      .lens(_.colonists).modify(_.update(removeTarget, _ - 1))
+      .lens(_.colonists).modify(_.update(InSanJuan, _ + 1))
+  )
 
   override def nextEvent(state: GameState): Event =
     GetPlayerInput[SelectColonistMove]
+}
+
+object SelectColonistRemoveTarget {
+  implicit val enum = new Enumerable[SelectColonistRemoveTarget] {
+    override def allPossibleMoves: Seq[SelectColonistRemoveTarget] =
+      ActiveColonist.values.map(SelectColonistRemoveTarget.apply)
+  }
 }

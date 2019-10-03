@@ -8,12 +8,13 @@ import v2.events.settler.RevealNewPlantations
 import v2.{GameState, components}
 
 object NextAction extends Event {
-  override def run(state: GameState): GameState = ???
+  override def run(state: GameState): GameState =
+    state.copy(currentPlayer = (state.currentPlayer + 1) % state.players.length)
 
   override def nextEvent(state: GameState): Event = {
     def cleanupRole(role: components.Role): Event = role match {
       case Captain => CleanupShips
-      case Craftsman => RevealNewPlantations
+      case Settler => RevealNewPlantations
       case Mayor => PopulateColonistShip
       case Craftsman => GetPlayerInput[SelectExtraGood]
       case _ => NextRole
@@ -26,7 +27,7 @@ object NextAction extends Event {
     val finishedWithRole = role match {
       case Captain =>
         // Captain is special because multiple rounds of actions can occur
-        state.players.exists(
+        !state.players.exists(
           p => p.canShipPublic(state.ships.values) || p.canShipWharf
         )
       case _ =>

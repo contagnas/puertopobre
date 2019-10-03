@@ -1,9 +1,12 @@
 package v2.events.captain
 
+import monocle.macros.syntax.lens._
 import v2.GameState
-import v2.components.{Good, ShipSize}
+import v2.components.Building.Harbor
+import v2.components.ColonistLocation.ActiveColonist.OnBuilding
 import v2.components.ShipSize.{PublicShipSize, Wharf}
-import v2.events.Event
+import v2.components.{Good, ShipSize}
+import v2.events.{Enumerable, Event, NextAction}
 
 case class ShipGoods(good: Good, ship: ShipSize) extends Event {
   override def validationError(state: GameState): Option[String] = {
@@ -28,6 +31,43 @@ case class ShipGoods(good: Good, ship: ShipSize) extends Event {
     }
   }
 
-  override def run(state: GameState): GameState = ???
-  override def nextEvent(state: GameState): Event = ???
+  override def run(state: GameState): GameState = {
+    val player = state.currentPlayerState
+    val playerGoods = player.numberOfGoods.get(good)
+    val (goodsAdded, updatedShipState) = ship match {
+      case size: ShipSize.PublicShipSize =>
+        val currentShip = state.ships(size)
+        val goodsAdded = math.min(playerGoods, currentShip.remainingCapacity)
+        val updatedShips = state.ships.updatedWith(size)(_.map(_.addGood(good, goodsAdded)))
+        (goodsAdded, state.copy(ships = updatedShips))
+      case ShipSize.Wharf =>
+        val goodsAdded = playerGoods
+        val usedWharf = state.updateCurrentPlayer(
+          _.lens(_.roleState.wharfUsed).set(true)
+        ).copy(availableGoods = state.availableGoods.update(good, _ + playerGoods))
+        (goodsAdded, usedWharf)
+    }
+
+    val harborBonus = if (player.colonists.exists(OnBuilding(Harbor))) 1 else 0
+    val captainBonus = if (state.currentPlayer == state.roleSelector && !player.roleState.hasShipped) 1 else 0
+    val pointsEarned = goodsAdded + harborBonus + captainBonus
+
+    updatedShipState.updateCurrentPlayer(
+      player => player
+        .lens(_.points).modify(_ + pointsEarned)
+        .lens(_.numberOfGoods).modify(_.update(good, _ - goodsAdded))
+    )
+  }
+
+  override def nextEvent(state: GameState): Event = NextAction
+}
+
+object ShipGoods {
+  implicit val enum = new Enumerable[ShipGoods] {
+    override def allPossibleMoves: Seq[ShipGoods] =
+      for {
+        good <- Good.values
+        ship <- ShipSize.values
+      } yield ShipGoods(good, ship)
+  }
 }

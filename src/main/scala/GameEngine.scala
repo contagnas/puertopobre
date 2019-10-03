@@ -84,11 +84,10 @@ object GameEngine {
 
       case NextRole =>
         val nextRoleSelector = (gameState.roleSelector + 1) % players.length
-        val resetRoleState = players.map(_.copy(roleState = RoleState()))
 
         val clearRoleState = gameState.copy(
           currentRole = None,
-          players = resetRoleState
+          players = players.map(_.copy(roleState = RoleState()))
         )
 
         if (nextRoleSelector == gameState.governor) {
@@ -278,7 +277,6 @@ object GameEngine {
           gameState.copy(
             players = players.map(p =>
               p.copy(money = p.money + payout)
-
             )
           ),
           NextAction

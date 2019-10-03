@@ -1,7 +1,8 @@
 package v2.events.captain
 
 import v2.GameState
-import v2.events.{Event, GetPlayerInput, NextAction}
+import v2.events.{Enumerable, Event, GetPlayerInput, NextAction}
+import monocle.macros.syntax.lens._
 
 case class DecideToShip(ship: Boolean) extends Event {
   override def validationError(state: GameState): Option[String] = {
@@ -17,9 +18,19 @@ case class DecideToShip(ship: Boolean) extends Event {
       None
   }
 
-  override def run(state: GameState): GameState = ???
+  override def run(state: GameState): GameState =
+    if (!ship) state.updateCurrentPlayer(
+      _.lens(_.roleState.wharfUsed).set(true)
+    ) else state
 
   override def nextEvent(state: GameState): Event =
     if (ship) GetPlayerInput[ShipGoods]
     else NextAction
+}
+
+object DecideToShip {
+  implicit val enum = new Enumerable[DecideToShip] {
+    override def allPossibleMoves: Seq[DecideToShip] =
+      List(true, false).map(DecideToShip.apply)
+  }
 }

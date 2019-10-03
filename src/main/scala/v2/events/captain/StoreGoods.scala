@@ -3,6 +3,7 @@ package v2.events.captain
 import v2.components.Good
 import v2.events.{Event, NextAction}
 import v2.{GameState, Player}
+import monocle.macros.syntax.lens._
 
 case class StoreGoods(goodToStore: Option[Good], usingWarehouse: Boolean) extends Event {
   override def validationError(state: GameState): Option[String] = {
@@ -39,7 +40,19 @@ case class StoreGoods(goodToStore: Option[Good], usingWarehouse: Boolean) extend
     }
   }
 
-  override def run(state: GameState): GameState = ???
+  override def run(state: GameState): GameState = goodToStore match {
+    case None => state
+    case Some(good) =>
+      val goodCount = if (usingWarehouse)
+        state.currentPlayerState.numberOfGoods.get(good)
+      else
+        1
+
+      state
+        .updateCurrentPlayer(_.lens(_.roleState.storedGoods).modify(_.updated(good, goodCount)))
+        .updateCurrentPlayer(_.lens(_.roleState.storedSingleGood).modify(_ || !usingWarehouse))
+        .updateCurrentPlayer(_.lens(_.roleState.warehousesUsed).modify(_ + (if (usingWarehouse) 1 else 0)))
+  }
 
   override def nextEvent(state: GameState): Event = NextAction
 }

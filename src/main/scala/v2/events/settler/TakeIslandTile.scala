@@ -5,7 +5,8 @@ import v2.components.Building.ConstructionHut
 import v2.components.ColonistLocation.ActiveColonist.OnBuilding
 import v2.components.IslandTile
 import v2.components.IslandTile.{Plantation, Quarry}
-import v2.events.{Event, GetPlayerInput}
+import v2.events.{Enumerable, Event, GetPlayerInput}
+import monocle.macros.syntax.lens._
 
 case class TakeIslandTile(islandTile: Option[IslandTile]) extends Event {
   override def validationError(state: GameState): Option[String] = {
@@ -30,12 +31,33 @@ case class TakeIslandTile(islandTile: Option[IslandTile]) extends Event {
           canTakeQuarry <- playerCanTakeQuarry
         } yield canTakeQuarry).swap.toOption
       case Some(plantation: Plantation) =>
-        Some(s"There is no $plantation available")
-        .filter(_ => state.shownPlantations.contains(plantation))
+        if (!state.shownPlantations.contains(plantation))
+          Some(s"There is no $plantation available")
+        else None
     }
   }
-  override def run(state: GameState): GameState = ???
+  override def run(state: GameState): GameState = islandTile match {
+    case None => state
+    case Some(tile) =>
+      val updatedPlayer = state.updateCurrentPlayer(
+        player => player
+          .lens(_.islandTiles).modify(_.update(tile, _ + 1))
+          .lens(_.roleState.selectedIslandTile).set(Some(tile))
+      )
+
+      tile match {
+        case Quarry => updatedPlayer.lens(_.quarriesRemaining).modify(_ - 1)
+        case plantation: Plantation => updatedPlayer.lens(_.shownPlantations).modify(_.update(plantation, _ - 1))
+      }
+  }
 
   override def nextEvent(state: GameState): Event =
     GetPlayerInput[UseHospice] // Could skip this if player doesn't have one
+}
+
+object TakeIslandTile {
+  implicit val enum = new Enumerable[TakeIslandTile] {
+    override def allPossibleMoves: Seq[TakeIslandTile] =
+      TakeIslandTile(None) +: IslandTile.values.map(Some.apply).map(TakeIslandTile.apply)
+  }
 }

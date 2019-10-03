@@ -1,7 +1,7 @@
 package v2.components
 
 import enumeratum._
-import v2.Count
+import v2.{Count, GameState}
 import v2.components.Good._
 
 import scala.util.Random
@@ -22,16 +22,27 @@ object IslandTile extends Enum[IslandTile] {
 
   case object Quarry extends IslandTile
 
-  def revealPlantations(
-    hiddenPlantations: Count[Plantation],
-    count: Int,
-    rng: Random
-  ): (Count[Plantation], Count[Plantation]) = (1 to count)
-    .foldLeft((hiddenPlantations, Count.empty[Plantation])) {
-      case ((hidden, shown), _) =>
-        val (stillHidden, justShown) = hidden.takeRandom(rng)
-        (stillHidden, shown.update(justShown, _ + 1))
+  def revealPlantations(state: GameState): GameState = {
+    var updatedState = state
+    for (_ <- 1 to state.constants.numberOfShownPlantations) {
+      if (updatedState.hiddenPlantations.total == 0) {
+        updatedState = updatedState.copy(
+          discardedPlantations = Count.empty,
+          hiddenPlantations = updatedState.discardedPlantations
+        )
+      }
+
+      if (updatedState.hiddenPlantations.total > 0) {
+        val (stillHidden, revealed) = updatedState.hiddenPlantations.takeRandom(state.constants.rng)
+        updatedState = updatedState.copy(
+          hiddenPlantations = stillHidden,
+          shownPlantations = updatedState.shownPlantations.update(revealed, _ + 1)
+        )
+      }
     }
+
+    updatedState
+  }
 
   override def values: IndexedSeq[IslandTile] = findValues ++ Plantation.values
 }

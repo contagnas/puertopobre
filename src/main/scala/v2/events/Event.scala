@@ -10,10 +10,10 @@ trait Event {
 }
 
 @typeclass trait Enumerable[E <: Event] {
-  def allValidMoves(state: GameState): Set[E] =
+  def allValidMoves(state: GameState): Seq[E] =
     allPossibleMoves.filter {
       move => move.validationError(state).isEmpty
-    }.toSet
+    }
 
   def allPossibleMoves: Seq[E] =
     throw new NotImplementedError("You need to implement at least one method in Enumerable")
