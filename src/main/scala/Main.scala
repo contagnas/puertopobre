@@ -1,12 +1,30 @@
-import Event.{GameOver, GetPlayerInput, SelectRole}
+package v2
+
+import v2.events.{Event, GameOver, GetPlayerInput, SelectRole}
 
 object Main extends App {
-  val players = 3
+  val seed = System.currentTimeMillis().toInt
+  val initialState = GameState.initialState( 3, seed)
 
-  val stream = LazyList.continually(null)
-    .scanLeft[(GameState, Event)](
-      GameState.initialState(players),
-      GetPlayerInput[SelectRole]
-    ) { case ((gameState, event), _) => GameEngine.step(gameState, event)
-    }.find { case (_, event) => event == GameOver }
+  val eventNumber = LazyList.continually(1)
+      .scanLeft(0)(_ + _)
+
+  eventNumber
+    .scanLeft[(GameState, Event)]((initialState, GetPlayerInput[SelectRole])) {
+      case ((state, event), i) =>
+        val nextState = event.run(state)
+        val playerOwnedColonists = nextState.players.map(_.colonists.total).sum
+        val totalColonists = playerOwnedColonists + nextState.colonistsOnShip + nextState.colonistsInSupply
+        if (totalColonists != 55)
+          throw new Exception(s"Not 55 colonists at event=$i")
+        val nextEvent = event.nextEvent(nextState)
+        (nextState, nextEvent)
+    }.find {
+    case (lastState, GameOver()) =>
+      println("game over")
+      println(s"seed = ${seed}")
+      println(lastState)
+      true
+    case _ => false
+  }
 }
