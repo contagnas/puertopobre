@@ -23,10 +23,9 @@ case class SelectColonistMove(colonistMove: ColonistMove) extends Event {
       case _ => false
     }
 
-    val colonistSlots = (
-      player.islandTiles.totalWhere(_ => true) +
-        player.buildings.map(_.colonistSlots).sum
-    )
+    val islandSlots = player.islandTiles.total
+    val buildingSlots = player.buildings.toList.map(_.colonistSlots).sum
+    val colonistSlots = islandSlots + buildingSlots
 
     colonistMove match {
       case Remove =>
