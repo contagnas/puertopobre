@@ -33,8 +33,8 @@ case class GameState(
   constants: GameConstants,
 ) {
   lazy val gameOver: Boolean = {
-    colonistsInSupply == 0 ||
-      pointsRemaining == 0 ||
+    colonistsInSupply <= 0 ||
+      pointsRemaining <= 0 ||
     players.exists(_.buildings.toList.map(b => if (b.largeBuilding) 2 else 1).sum >= 12)
   }
 

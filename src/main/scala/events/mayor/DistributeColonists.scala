@@ -7,7 +7,7 @@ import v2.events.{Event, GetPlayerInput}
 object DistributeColonists extends Event {
   override def run(state: GameState): GameState =
     if (state.colonistsOnShip == 0)
-      // Hack: We already distributed colonists, now we're going around allocating them
+      // Hack: We already distributed colonists, now we're going taking turns allocating them
       state
     else {
       val players = state.players
@@ -27,10 +27,10 @@ object DistributeColonists extends Event {
         players = state.players.zipWithIndex.map { case (player, seat) =>
           val mayorBonus = if (seat == state.roleSelector) 1 else 0
           val extra = if (takesExtra.contains(seat)) 1 else 0
-          val c  = colonistsToEach + extra + mayorBonus
+          val colonistsGained  = colonistsToEach + extra + mayorBonus
 
           player.copy(
-            colonists = player.colonists.update(InSanJuan, _ + colonistsToEach + extra + mayorBonus)
+            colonists = player.colonists.update(InSanJuan, _ + colonistsGained)
           )
         }
       )
