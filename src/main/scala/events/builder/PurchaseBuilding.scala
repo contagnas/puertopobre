@@ -6,7 +6,13 @@ import v2.events.{Enumerable, Event, GetPlayerInput}
 import monocle.macros.syntax.lens._
 
 case class PurchaseBuilding(purchasedBuilding: Option[Building]) extends Event {
-  override def validationError(state: GameState): Option[String] =
+  override def validationError(state: GameState): Option[String] = {
+    val largeBuildings = state.currentPlayerState.buildings.count(_.largeBuilding)
+    val smallBuildings = state.currentPlayerState.buildings.size - largeBuildings
+
+    val buildingSlotsRemaining = 12 - (largeBuildings * 2 + smallBuildings)
+    val canFitSmallBuilding = buildingSlotsRemaining >= 1
+    val canFitLargeBuilding = (largeBuildings < 4 && smallBuildings <= 10 - 2 * largeBuildings)
     purchasedBuilding match {
       case Some(building) =>
         val price = building.discountedPrice(state)
@@ -16,9 +22,14 @@ case class PurchaseBuilding(purchasedBuilding: Option[Building]) extends Event {
           Some(s"You cannot afford $building, it costs $price to you.")
         else if (!state.buildingShop.exists(building))
           Some(s"There are no ${building}s left.")
+        else if (building.largeBuilding && !canFitLargeBuilding)
+          Some("You do not have room for any more large buildings.")
+        else if (!canFitSmallBuilding)
+          Some("You do not have room for any more buildings.")
         else None
       case None => None
     }
+  }
 
   override def run(state: GameState): GameState = purchasedBuilding match {
     case None => state
